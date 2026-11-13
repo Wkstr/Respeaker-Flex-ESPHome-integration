@@ -24,7 +24,7 @@ substitutions:
 
 packages:
   flex:
-    url: https://github.com/seeedstudio/Respeaker-Flex-ESPHome-integration
+    url: https://github.com/Wkstr/Respeaker-Flex-ESPHome-integration
     ref: ${flex_ref}
     refresh: 1d
     files:
