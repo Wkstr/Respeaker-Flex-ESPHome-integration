@@ -1,0 +1,115 @@
+# =============================================================================
+# reSpeaker Flex satellite — base package
+#
+# The voice satellite core, node identity, ESP32-S3 build options, the I2C bus,
+# and the external components.
+#
+# The core comes from Respeaker-Lite-ESPHome-integration at respeaker_lite_ref:
+# boot and connection logic, the voice pipeline, the media player, the timers,
+# the alarm, and the sounds. The packages of this repository add the Flex
+# hardware and extend the core items with "id: !extend <id>".
+#
+# This package declares the substitution defaults for the whole project.
+# Override any of them in your own configuration.
+# =============================================================================
+
+substitutions:
+  # --- Node identity -------------------------------------------------------
+  name: respeaker-flex-assistant
+  friendly_name: reSpeaker Flex Assistant
+
+  # --- Source refs ---------------------------------------------------------
+  # Release of this repository: a tag such as 2026.11.0, a branch, or a commit.
+  # It selects the YAML packages. Set it to "main" to follow the newest code.
+  flex_ref: main
+  # Release of formatBCE's XVF3800 integration that holds the C++ I2C
+  # component (respeaker_xvf3800). The Flex uses the same XMOS XVF3800 chip
+  # and I2C protocol, so we reuse the component without modification.
+  respeaker_ref: 2026.10.4
+  # Release of Respeaker-Lite-ESPHome-integration that holds the voice
+  # satellite core, the sounds, and the wake word models.
+  respeaker_lite_ref: 2026.10.4
+
+  # --- Tuning --------------------------------------------------------------
+  log_level: INFO
+
+packages:
+  # The core merges first, so a value in the packages of this repository wins.
+  satellite_core:
+    url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration
+    ref: ${respeaker_lite_ref}
+    refresh: 1d
+    files:
+      - packages/core/base.yaml
+      - packages/core/voice-assistant.yaml
+      - packages/core/media-player.yaml
+      - packages/core/timers-alarm.yaml
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  project:
+    name: seeedstudio.Respeaker Flex XVF3800 Satellite
+    version: 1.0.0
+
+esp32:
+  board: esp32-s3-devkitc-1
+  cpu_frequency: 240MHz
+  variant: esp32s3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+
+# Credentials are not set here. A remote package cannot read secrets.
+# Supply "ssid" and "password" from your own configuration. The two blocks merge.
+wifi:
+  power_save_mode: none
+  reboot_timeout: 10min
+
+logger:
+  level: ${log_level}
+  initial_level: ${log_level}
+  logs:
+    sensor: WARN
+    voice_assistant: INFO
+    micro_wake_word: INFO
+    i2s_audio: WARN
+    respeaker_xvf3800: INFO
+
+i2c:
+  - id: internal_i2c
+    sda: GPIO5
+    scl: GPIO6
+    scan: true
+    frequency: 400kHz
+
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+external_components:
+  # The respeaker_xvf3800 component handles I2C communication with the XMOS
+  # XVF3800 DSP. The Flex uses the same chip and protocol as formatBCE's
+  # reference board, so we reuse the component directly.
+  # We deliberately omit:
+  # - aic3104: the Flex AIC3104 codec is owned by the XMOS firmware, not ESP32.
+  # - decimator: the Flex I2S runs at 16 kHz natively, no 48k-to-16k decimation.
+  - source:
+      type: git
+      url: https://github.com/formatBCE/Respeaker-XVF3800-ESPHome-integration
+      ref: ${respeaker_ref}
+    components:
+      - respeaker_xvf3800
+    refresh: 0s

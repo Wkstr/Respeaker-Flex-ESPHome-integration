@@ -1,0 +1,56 @@
+# =============================================================================
+# reSpeaker Flex circular array — c48k2ch firmware example
+#
+# Target XMOS firmware: respeaker_flex_i2s_c48k2ch_v1.0.4.bin
+# (circular 4-mic array, two processed channels, XMOS I2S master)
+#
+# NOTE: Despite the "48k" in the firmware name, the I2S bus actually runs
+# at 16 kHz (measured on l48k2ch_v1.0.4; the circular variant behaves the
+# same). This is a known firmware issue — see reSpeaker_Flex issue #2:
+# https://github.com/respeaker/reSpeaker_Flex/issues/2
+#
+# The ESPHome configuration is identical to the c16k2ch variant: 16 kHz,
+# 32-bit, stereo, I2S secondary. No changes are needed.
+#
+# Flash the XMOS firmware via USB DFU before using this configuration.
+# See: https://github.com/respeaker/reSpeaker_Flex
+#
+# Before you build this file, put a secrets.yaml next to it:
+#   wifi_ssid: "your-ssid"
+#   wifi_password: "your-password"
+#   api_key: "your-api-encryption-key"
+#   ota_password: "your-ota-password"
+# =============================================================================
+
+substitutions:
+  name: respeaker-flex-c48
+  friendly_name: reSpeaker Flex C48 Assistant
+
+  # Release of this repository. Use a tag (e.g. 2026.11.0) for stability,
+  # or "main" for the latest code.
+  flex_ref: main
+
+packages:
+  flex:
+    url: https://github.com/seeedstudio/Respeaker-Flex-ESPHome-integration
+    ref: ${flex_ref}
+    refresh: 1d
+    files:
+      - packages/base.yaml
+      - packages/hardware.yaml
+      - packages/voice-assistant.yaml
+      - packages/no-leds.yaml
+
+# A remote package cannot read secrets, so the credentials go here.
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+    password: !secret ota_password

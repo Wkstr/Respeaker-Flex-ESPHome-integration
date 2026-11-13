@@ -1,0 +1,60 @@
+# =============================================================================
+# reSpeaker Flex satellite — voice assistant package
+#
+# The Flex additions to the voice assistant of the core: the beam lock and
+# the wake word gain.
+#
+# The core (Respeaker-Lite-ESPHome-integration packages/core/) holds the wake
+# word detection, the voice pipeline, the media player, and the sounds. The
+# sound URLs are substitutions there. Override any of them to use your own files.
+# =============================================================================
+
+switch:
+  # Beam Lock. When on, the XVF3800 beam is pinned to the wake-word direction
+  # for the duration of command capture (released on STT VAD end). Off by
+  # default because fixed-beam mode is a behavioural change worth opting into
+  # deliberately.
+  # Requires Flex firmware v1.0.4 or later (fixed-beam commands).
+  - platform: template
+    id: beam_lock_enabled
+    name: Beam lock
+    icon: "mdi:target-account"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+micro_wake_word:
+  microphone:
+    # The Flex XVF3800 uses the default gain of 1, same as formatBCE's
+    # reference board. The Respeaker Lite core sets 4; override it here.
+    gain_factor: 1
+
+script:
+  # The core runs this hook after a wake word started the voice assistant.
+  - id: !extend wake_word_start_hook
+    then:
+      # Pin the AEC beam to the wake-word direction before any other sound
+      # source can steal it. Gated by the user-facing switch so the feature
+      # is opt-in.
+      - if:
+          condition:
+            switch.is_on: beam_lock_enabled
+          then:
+            - lambda: id(respeaker).lock_beam();
+
+# These lists add to the core triggers, so they run after the core actions.
+voice_assistant:
+  on_stt_vad_end:
+    # Release the beam as soon as command capture is over, so the stop-word
+    # detector can still hear the user from anywhere in the room during TTS.
+    - lambda: id(respeaker).unlock_beam();
+  on_end:
+    # Safety-net unlock: covers paths where on_stt_vad_end never fired
+    # (pipeline error mid-capture, abort, etc.). Idempotent.
+    - lambda: id(respeaker).unlock_beam();
+
+media_player:
+  # The full volume range.
+  - id: !extend external_media_player
+    volume_min: 0.0
+    volume_max: 1.0

@@ -1,0 +1,13 @@
+# =============================================================================
+# reSpeaker Flex satellite — no-LED stub package
+#
+# The Flex has no LED ring. The upstream voice core emits LED state
+# notifications through these hooks. Keep the hook IDs without generating
+# I2C writes or non-functional HA light entities.
+# =============================================================================
+
+script:
+  - id: control_leds
+    then: []
+  - id: control_leds_volume_changed
+    then: []
