@@ -103,13 +103,20 @@ external_components:
   # The respeaker_xvf3800 component handles I2C communication with the XMOS
   # XVF3800 DSP. The Flex uses the same chip and protocol as formatBCE's
   # reference board, so we reuse the component directly.
-  # We deliberately omit:
-  # - aic3104: the Flex AIC3104 codec is owned by the XMOS firmware, not ESP32.
-  # - decimator: the Flex I2S runs at 16 kHz natively, no 48k-to-16k decimation.
+  # We deliberately omit aic3104: the Flex codec is owned by the XMOS firmware.
   - source:
       type: git
       url: https://github.com/formatBCE/Respeaker-XVF3800-ESPHome-integration
       ref: ${respeaker_ref}
     components:
       - respeaker_xvf3800
+    refresh: 0s
+  # The decimator is only used by hardware-48k.yaml (48k→16k for the voice
+  # pipeline). It is included here so both hardware variants can share base.yaml.
+  - source:
+      type: git
+      url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration
+      ref: ${respeaker_lite_ref}
+    components:
+      - decimator
     refresh: 0s
