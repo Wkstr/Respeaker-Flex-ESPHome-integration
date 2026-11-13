@@ -16,10 +16,6 @@ Built on top of [formatBCE's](https://github.com/formatBCE) voice satellite core
 > **Note:** The 16k and 48k firmware images use different I2S clock rates.
 > Use the matching hardware package for your firmware. If you get noise or
 > no audio, you are likely using the wrong package.
->
-> Some early Flex "48k" firmware images may actually run at 16 kHz — see
-> [reSpeaker_Flex issue #2](https://github.com/respeaker/reSpeaker_Flex/issues/2).
-> If the 48k package gives you noise, try the 16k package instead.
 
 ## Hardware
 
@@ -51,8 +47,10 @@ Download the appropriate firmware from the [reSpeaker Flex releases](https://git
 
 Create a new device in ESPHome Device Builder and paste one of the example configurations:
 
-- **Circular array, 16k firmware:** [`config/flex-c16k2ch-example.yaml`](config/flex-c16k2ch-example.yaml)
-- **Circular array, 48k firmware:** [`config/flex-c48k2ch-example.yaml`](config/flex-c48k2ch-example.yaml)
+| Array | 16k Firmware | 48k Firmware |
+|---|---|---|
+| **Circular** | [`flex-c16k2ch-example.yaml`](config/flex-c16k2ch-example.yaml) | [`flex-c48k2ch-example.yaml`](config/flex-c48k2ch-example.yaml) |
+| **Linear** | [`flex-l16k2ch-example.yaml`](config/flex-l16k2ch-example.yaml) | [`flex-l48k2ch-example.yaml`](config/flex-l48k2ch-example.yaml) |
 
 Or reference the packages directly in your own YAML:
 
@@ -130,6 +128,15 @@ This repository reuses two upstream projects:
 | Voice satellite core | [formatBCE/Respeaker-Lite-ESPHome-integration](https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration) | Boot logic, voice pipeline, media player, timers, sounds |
 | XVF3800 I2C component | [formatBCE/Respeaker-XVF3800-ESPHome-integration](https://github.com/formatBCE/Respeaker-XVF3800-ESPHome-integration) | `respeaker_xvf3800` C++ component for XMOS I2C communication |
 
+### Why a Separate Repository?
+
+formatBCE's [Respeaker-XVF3800-ESPHome-integration](https://github.com/formatBCE/Respeaker-XVF3800-ESPHome-integration) targets the **reSpeaker XVF3800 4-Mic Array** (a different Seeed product). The reSpeaker **Flex** shares the same XMOS XVF3800 chip and I2C protocol, but differs in hardware design, firmware, and capabilities. A separate repository is needed because:
+
+1. **Different I2S clock topology:** The XVF3800 4-Mic Array requires the ESP32 to provide a 12.288 MHz MCLK. The Flex XMOS generates its own MCLK and acts as the sole I2S master — the ESP32 only needs to listen.
+2. **Different firmware management:** formatBCE's integration auto-updates the XMOS firmware via ESPHome DFU. The Flex firmware is provided by Seeed Studio directly; auto-flashing the wrong image would break the array geometry.
+3. **Different hardware peripherals:** The XVF3800 4-Mic Array has a 12-LED ring, a physical mute button, and an ESP32-controlled AIC3104 codec. The Flex has none of these — the codec is owned by the XMOS firmware.
+4. **Different mute mechanism:** On the XVF3800 4-Mic Array, X0D30 is a microphone mute GPIO. On the Flex, X0D30 is the **amplifier SD/FAULT** line — writing it as a mute would damage the amplifier.
+
 ### Key Differences from formatBCE's XVF3800 4-Mic Array
 
 | Aspect | XVF3800 4-Mic Array | reSpeaker Flex |
@@ -141,7 +148,10 @@ This repository reuses two upstream projects:
 | Mute button | Physical button | None |
 | Mic mute method | X0D30 GPIO | ESPHome software mute |
 | XMOS DFU | Auto-update via ESPHome | Manual (Seeed provides firmware) |
-| MCLK | ESP32 provides 12.288 MHz | XMOS outputs MCLK (not needed by ESP32) |
+| MCLK | ESP32 provides 12.288 MHz | XMOS generates MCLK internally |
+| I2S master | XMOS (with ESP32 MCLK) | XMOS (self-clocked) |
+| ESPHome packages | base + hardware + voice-assistant + leds + timers-alarm | base + hardware(-48k) + voice-assistant + no-leds |
+| C++ components | respeaker_xvf3800 + aic3104 + decimator | respeaker_xvf3800 + decimator (48k only) |
 
 ## Repository Structure
 
@@ -156,7 +166,10 @@ This repository reuses two upstream projects:
 │   ├── common/
 │   │   └── flex-satellite-base.yaml   # All packages combined
 │   ├── flex-c16k2ch-example.yaml      # Circular 16k example
-│   └── flex-c48k2ch-example.yaml      # Circular 48k example
+│   ├── flex-c48k2ch-example.yaml      # Circular 48k example
+│   ├── flex-l16k2ch-example.yaml      # Linear 16k example
+│   ├── flex-l48k2ch-example.yaml      # Linear 48k example
+│   └── secrets.yaml.example           # Credentials template
 └── README.md
 ```
 
@@ -192,4 +205,3 @@ See the upstream repositories for their respective licenses.
 
 - [formatBCE](https://github.com/formatBCE) — voice satellite core, XVF3800 I2C component, and the original integration architecture
 - [Seeed Studio](https://www.seeedstudio.com/) — reSpeaker Flex hardware and XMOS firmware
-- [linkedupbits](https://github.com/linkedupbits) — Flex I2S clock measurements and working 16 kHz configuration ([issue #2 comment](https://github.com/respeaker/reSpeaker_Flex/issues/2#issuecomment-6457437208))
