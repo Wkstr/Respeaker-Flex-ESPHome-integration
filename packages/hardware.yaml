@@ -7,10 +7,12 @@
 # Do not change the pins. They are fixed by the Flex board layout.
 # The same pin map applies to both circular (c*) and linear (l*) Flex arrays.
 #
+# Use this package for Flex 16k firmware images (c16k2ch / l16k2ch).
+# Verified working: 16 kHz I2S, no decimator needed.
+#
 # Key differences from formatBCE's XVF3800 4-Mic Array:
-# - I2S runs at 16 kHz (not 48 kHz). Even the "48k" Flex firmware images
-#   actually clock I2S at 16 kHz — see reSpeaker_Flex issue #2.
-# - No decimator: the XMOS outputs 16 kHz directly, no 48k-to-16k step.
+# - I2S runs at 16 kHz natively, no decimator.
+# - For 48k firmware images, use hardware-48k.yaml instead.
 # - No AIC3104 DAC control: the codec is owned by the XMOS firmware.
 # - No LED ring, no mute button on the Flex.
 # - Microphone mute is done in ESPHome software (microphone.mute), not by

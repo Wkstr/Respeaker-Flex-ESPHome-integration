@@ -1,13 +1,16 @@
 # =============================================================================
 # reSpeaker Flex satellite — hardware package (48 kHz firmware)
 #
-# Use this package ONLY if your Flex 48k firmware actually clocks I2S at
-# 48 kHz. Some Flex "48k" firmware images run at 16 kHz instead — see
-# reSpeaker_Flex issue #2. Measure LRCLK or test with the 16k package first.
+# Use this package for Flex 48k firmware images (c48k2ch / l48k2ch).
+# Verified working: 48 kHz I2S, decimator 48k→16k for the voice pipeline.
+#
+# If you get noise or no audio, your firmware may actually run at 16 kHz
+# (some early Flex 48k images — see reSpeaker_Flex issue #2). Use the
+# 16k hardware.yaml package instead in that case.
 #
 # Differences from hardware.yaml (16 kHz):
 # - I2S sample rate: 48000 (not 16000)
-# - Decimator: 48k→16k for the voice pipeline (same as formatBCE's reference)
+# - Decimator: 48k→16k for the voice pipeline
 # - Speaker resampler: 48 kHz (not 16 kHz)
 # =============================================================================
 

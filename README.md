@@ -6,19 +6,20 @@ Built on top of [formatBCE's](https://github.com/formatBCE) voice satellite core
 
 ## Supported Firmware
 
-| XMOS Firmware Image | Array | I2S Rate | Channels |
-|---|---|---|---|
-| `respeaker_flex_i2s_c16k2ch_v*.bin` | Circular | 16 kHz | 2 (comms + ASR) |
-| `respeaker_flex_i2s_c48k2ch_v*.bin` | Circular | 16 kHz* | 2 (comms + ASR) |
-| `respeaker_flex_i2s_l16k2ch_v*.bin` | Linear | 16 kHz | 2 (comms + ASR) |
-| `respeaker_flex_i2s_l48k2ch_v*.bin` | Linear | 16 kHz* | 2 (comms + ASR) |
+| XMOS Firmware Image | Array | I2S Rate | Hardware Package | Channels |
+|---|---|---|---|---|
+| `respeaker_flex_i2s_c16k2ch_v*.bin` | Circular | 16 kHz | `hardware.yaml` | 2 (comms + ASR) |
+| `respeaker_flex_i2s_c48k2ch_v*.bin` | Circular | 48 kHz | `hardware-48k.yaml` | 2 (comms + ASR) |
+| `respeaker_flex_i2s_l16k2ch_v*.bin` | Linear | 16 kHz | `hardware.yaml` | 2 (comms + ASR) |
+| `respeaker_flex_i2s_l48k2ch_v*.bin` | Linear | 48 kHz | `hardware-48k.yaml` | 2 (comms + ASR) |
 
-> **\* Note:** Despite the "48k" in the firmware name, the I2S bus actually
-> runs at **16 kHz** on all tested Flex firmware images (v1.0.3/v1.0.4).
-> This is a known firmware issue — see
+> **Note:** The 16k and 48k firmware images use different I2S clock rates.
+> Use the matching hardware package for your firmware. If you get noise or
+> no audio, you are likely using the wrong package.
+>
+> Some early Flex "48k" firmware images may actually run at 16 kHz — see
 > [reSpeaker_Flex issue #2](https://github.com/respeaker/reSpeaker_Flex/issues/2).
-> The ESPHome configuration is the same for all images: 16 kHz, 32-bit,
-> stereo, I2S secondary.
+> If the 48k package gives you noise, try the 16k package instead.
 
 ## Hardware
 
@@ -133,21 +134,22 @@ This repository reuses two upstream projects:
 
 | Aspect | XVF3800 4-Mic Array | reSpeaker Flex |
 |---|---|---|
-| I2S sample rate | 48 kHz | 16 kHz |
-| Decimator | Yes (48k→16k) | No (native 16k) |
+| I2S sample rate | 48 kHz | 16 kHz or 48 kHz (depends on firmware image) |
+| Decimator | Yes (48k→16k) | Only for 48k firmware (hardware-48k.yaml) |
 | AIC3104 DAC control | ESP32 via I2C | XMOS firmware owns it |
 | LED ring | 12-LED ring | None |
 | Mute button | Physical button | None |
 | Mic mute method | X0D30 GPIO | ESPHome software mute |
 | XMOS DFU | Auto-update via ESPHome | Manual (Seeed provides firmware) |
-| MCLK | ESP32 provides 12.288 MHz | XMOS outputs 24.576 MHz (not needed by ESP32) |
+| MCLK | ESP32 provides 12.288 MHz | XMOS outputs MCLK (not needed by ESP32) |
 
 ## Repository Structure
 
 ```
 ├── packages/
 │   ├── base.yaml              # Node identity, ESP32 build, I2C, external components
-│   ├── hardware.yaml           # Flex I2S pins, mic, speaker, XMOS DSP, controls
+│   ├── hardware.yaml           # 16 kHz: I2S pins, mic, speaker, XMOS DSP, controls
+│   ├── hardware-48k.yaml       # 48 kHz: same + decimator (48k→16k for voice pipeline)
 │   ├── voice-assistant.yaml    # Beam lock, wake word gain, volume range
 │   └── no-leds.yaml            # LED hook stubs (Flex has no LED ring)
 ├── config/

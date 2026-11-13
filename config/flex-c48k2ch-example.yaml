@@ -4,14 +4,12 @@
 # Target XMOS firmware: respeaker_flex_i2s_c48k2ch_v1.0.4.bin
 # (circular 4-mic array, two processed channels, XMOS I2S master)
 #
-# NOTE: Some Flex "48k" firmware images actually clock I2S at 16 kHz
-# (measured on l48k2ch_v1.0.4 — see reSpeaker_Flex issue #2). If your
-# 48k firmware runs at 16 kHz, use the 16k example instead.
+# This example uses hardware-48k.yaml: 48 kHz I2S with a decimator
+# (48k→16k for the voice pipeline). Verified working with c48k2ch firmware.
 #
-# This example uses hardware-48k.yaml with 48 kHz I2S and a decimator
-# (48k→16k for the voice pipeline). If you get noise or no audio with
-# this configuration, your firmware may actually be running at 16 kHz —
-# switch to the flex-c16k2ch-example.yaml configuration.
+# If you get noise or no audio, your firmware may actually run at 16 kHz
+# (some early Flex 48k images — see reSpeaker_Flex issue #2). In that
+# case, use flex-c16k2ch-example.yaml (hardware.yaml) instead.
 #
 # Flash the XMOS firmware via USB DFU before using this configuration.
 # See: https://github.com/respeaker/reSpeaker_Flex
